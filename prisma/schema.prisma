@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(CLIENT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts        Account[]
+  sessions        Session[]
+  trainerProfile  TrainerProfile?
+  appointments    Appointment[]
+  chatMessages    ChatMessage[]
+  reviews         Review[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model TrainerProfile {
+  id           String      @id @default(cuid())
+  userId       String      @unique
+  specialties  Specialty[]
+  city         String
+  venueType    Venue
+  ratePerHr    Float
+  bio          String
+  avgRating    Float       @default(0)
+  isApproved   Boolean     @default(false)
+  stripeAccountId String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  availabilitySlots AvailabilitySlot[]
+}
+
+model AvailabilitySlot {
+  id        String   @id @default(cuid())
+  trainerId String
+  startAt   DateTime
+  endAt     DateTime
+  isBooked  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  trainer     TrainerProfile @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  appointment Appointment?
+}
+
+model Appointment {
+  id             String            @id @default(cuid())
+  slotId         String            @unique
+  clientId       String
+  status         AppointmentStatus @default(BOOKED)
+  paymentIntent  String?
+  reminderSent   Boolean           @default(false)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  slot         AvailabilitySlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  client       User             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  chatMessages ChatMessage[]
+  review       Review?
+}
+
+model ChatMessage {
+  id            String   @id @default(cuid())
+  appointmentId String
+  senderId      String
+  content       String
+  sentAt        DateTime @default(now())
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  sender      User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id            String  @id @default(cuid())
+  appointmentId String  @unique
+  reviewerId    String   
+  
+  rating        Int
+  comment       String?
+  createdAt     DateTime @default(now())
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  reviewer    User        @relation(fields: [reviewerId],    references: [id])
+}
+
+enum Role {
+  CLIENT
+  TRAINER
+  ADMIN
+}
+
+enum Specialty {
+  FitnessCoach
+  HealthCoach
+  LifeCoach
+  PersonalTrainer
+  GroupInstructor
+}
+
+enum Venue {
+  Gym
+  Studio
+  Outdoor
+  Home
+}
+
+enum AppointmentStatus {
+  BOOKED
+  COMPLETED
+  CANCELLED
+}
