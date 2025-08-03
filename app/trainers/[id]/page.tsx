@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { TrainerProfile } from "@/components/trainer-card"
+import { TrainerProfile } from "@/components/trainer-profile"
 import { BookingCalendar } from "@/components/booking-calendar"
 
 interface TrainerPageProps {

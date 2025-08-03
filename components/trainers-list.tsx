@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { TrainerCard } from "./trainer-card"
+import { TrainerCard } from "./trainer-profile"
 
 interface TrainersListProps {
   searchParams?: {
