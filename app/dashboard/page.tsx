@@ -2,7 +2,7 @@ import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { DashboardTabs } from "@/components/ui/tabs"
+import { DashboardTabs } from "@/components/ui/dashboard-tabs.tsx"
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
